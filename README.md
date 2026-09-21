@@ -25,7 +25,7 @@ and nothing outside the plugin's own directory is touched. Two commands:
 
 ```bash
 omarchy plugin add https://github.com/Kalinewb/omarchy-oled-corners.git
-omarchy plugin enable graveklar.oled-corners
+omarchy plugin enable kalinewb.oled-corners
 ```
 
 Plugins land disabled so you can read the code first — it's one QML file.
@@ -34,13 +34,13 @@ The corners appear the moment it's enabled; no restart, no configuration.
 To turn it off without uninstalling:
 
 ```bash
-omarchy plugin disable graveklar.oled-corners
+omarchy plugin disable kalinewb.oled-corners
 ```
 
 To remove it completely:
 
 ```bash
-omarchy plugin remove graveklar.oled-corners
+omarchy plugin remove kalinewb.oled-corners
 ```
 
 That deletes the checkout. If you made one, delete
