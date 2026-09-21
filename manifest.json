@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "graveklar.oled-corners",
+  "name": "OLED Corners",
+  "version": "1.0.0",
+  "author": "graveklar",
+  "description": "Black rounded corners drawn in the physical corners of every monitor, sized from your Hyprland config",
+  "kinds": [
+    "service"
+  ],
+  "entryPoints": {
+    "service": "Corners.qml"
+  }
+}
