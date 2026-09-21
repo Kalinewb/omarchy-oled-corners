@@ -8,8 +8,6 @@ Handy on OLED panels (a true-black corner costs no light and hides a rounded
 bezel), and on laptops whose display glass is rounded but whose framebuffer
 isn't.
 
-![corner detail](docs/corner.png)
-
 ## What it does
 
 - One click-through overlay per screen. Clicks, scrolls and hovers pass
