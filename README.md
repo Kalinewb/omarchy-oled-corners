@@ -20,18 +20,31 @@ isn't.
 
 ## Install
 
+No setup, no dependencies beyond the Omarchy shell itself, no install script,
+and nothing outside the plugin's own directory is touched. Two commands:
+
 ```bash
 omarchy plugin add https://github.com/Kalinewb/omarchy-oled-corners.git
 omarchy plugin enable graveklar.oled-corners
 ```
 
 Plugins land disabled so you can read the code first — it's one QML file.
+The corners appear the moment it's enabled; no restart, no configuration.
 
-To remove:
+To turn it off without uninstalling:
+
+```bash
+omarchy plugin disable graveklar.oled-corners
+```
+
+To remove it completely:
 
 ```bash
 omarchy plugin remove graveklar.oled-corners
 ```
+
+That deletes the checkout. If you made one, delete
+`~/.config/omarchy/oled-corners.json` too — nothing else is left behind.
 
 ## Configuration
 
@@ -58,6 +71,10 @@ Create `~/.config/omarchy/oled-corners.json`:
 | `monitors` | Per-output radius overrides, keyed by Hyprland output name (`hyprctl monitors`). A `0` turns corners off for that display. |
 
 The file is watched — edits apply immediately, no restart.
+
+## Compatibility
+
+Omarchy Quattro (`omarchy-shell`, Quickshell) on Hyprland. Nothing else is required.
 
 ## License
 
