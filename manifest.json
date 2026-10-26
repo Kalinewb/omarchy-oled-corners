@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "id": "kalinewb.oled-corners",
   "name": "OLED Corners",
-  "version": "1.0.0",
-  "author": "Kalinewb",
+  "version": "1.0.1",
+  "author": "kalinewb",
   "description": "Black rounded corners drawn in the physical corners of every monitor, sized from your Hyprland config",
   "kinds": [
     "service"
