@@ -28,8 +28,9 @@ omarchy plugin add https://github.com/Kalinewb/omarchy-oled-corners.git
 omarchy plugin enable kalinewb.oled-corners
 ```
 
-Plugins land disabled so you can read the code first — it's one QML file.
-The corners appear the moment it's enabled; no restart, no configuration.
+Plugins land disabled so you can read the code first — `Corners.qml` is the
+whole service; the rest is the optional settings panel below. The corners
+appear the moment it's enabled; no restart, no configuration.
 
 To turn it off without uninstalling:
 
@@ -43,8 +44,10 @@ To remove it completely:
 omarchy plugin remove kalinewb.oled-corners
 ```
 
-That deletes the checkout. If you made one, delete
-`~/.config/omarchy/oled-corners.json` too — nothing else is left behind.
+That deletes the checkout. Two small files can outlive it, and only if you
+made them: `~/.config/omarchy/oled-corners.json` (your own config) and
+`~/.local/state/kalinewb.oled-corners/` (what the settings panel saved).
+Delete them too if you want nothing left behind.
 
 ## Configuration
 
@@ -71,6 +74,63 @@ Create `~/.config/omarchy/oled-corners.json`:
 | `monitors` | Per-output radius overrides, keyed by Hyprland output name (`hyprctl monitors`). A `0` turns corners off for that display. |
 
 The file is watched — edits apply immediately, no restart.
+
+## Settings panel (optional, needs the notch)
+
+If you run the [Notch](https://github.com/Kalinewb/omarchy-notch) as your bar,
+OLED Corners offers it a settings panel that opens **inside the notch**, in the
+notch's own colours and corner radius. It lists "All monitors" and one row per
+screen:
+
+| Key        | What it does                                                        |
+|------------|---------------------------------------------------------------------|
+| `←` / `→`  | Radius down / up by one pixel (also the `−` and `+` buttons)        |
+| `F` or `⌫` | **Follow**: hand the row back to the level above it                 |
+| `↑` / `↓`  | Pick a row                                                          |
+| `Esc`      | Close                                                               |
+
+A row set to **Follow** shows what it will use, for example `Follow · 22 px`.
+
+Open it from a keybind, the Omarchy menu or a script:
+
+```bash
+omarchy-shell oled-corners settings
+```
+
+The answer is `opening`, `hidden` (the bar is hidden) or `no-host` (see
+*Without the notch*). `omarchy-shell oled-corners status` prints the radii in
+use, as JSON.
+
+**Where it saves.** The panel never writes your
+`~/.config/omarchy/oled-corners.json`. Its settings go in
+`~/.local/state/kalinewb.oled-corners/panel.json` (`$XDG_STATE_HOME` is
+respected) and are laid on top of your file:
+
+1. a monitor's own value set in the panel,
+2. "All monitors" set in the panel,
+3. your `oled-corners.json` (its per-monitor value, then its `radius`),
+4. Hyprland's `decoration:rounding`.
+
+So **Follow** on a row falls back to your file and Hyprland, and deleting
+`panel.json` puts everything back the way your file says. If `panel.json` is
+not valid JSON the panel says so and refuses to write rather than overwrite
+what you typed.
+
+## Without the notch
+
+The notch is optional and nothing depends on it. Under another bar, or with the
+notch removed or its integration switched off in Settings → Integrations, the
+plugin is exactly OLED Corners 1.0.1: the same overlays, the same
+`oled-corners.json`, no extra files, and no panel. `omarchy-shell oled-corners
+settings` answers `no-host` and does nothing. The notch is detected from the
+small heartbeat file it keeps in `$XDG_RUNTIME_DIR/kalinewb.notch/` (read only);
+the plugin asks the host for its panel and never installs, enables or changes
+anything on the host.
+
+The integration follows the notch's
+[surface contract](https://github.com/Kalinewb/omarchy-notch/blob/master/SURFACE-HOSTING.md),
+version 1: `Surface.qml` is declared in the manifest and draws no window of its
+own.
 
 ## Compatibility
 
