@@ -30,7 +30,7 @@ ln -sfn "$SHELL_PATH/shell" "$work/qmlpath/qs"
 FATAL='syntax|import|missing-type|unresolved-type|incompatible-type|read-only-property|duplicated-name|required|unresolved-alias|missing-enum-entry|recursion-depth-errors|attached-property-reuse|non-list-property|property-override|id-shadows-member'
 
 cd "$REPO"
-files=(*.qml)
+files=(*.qml dev/*.qml)
 # The harnesses import "repo/ui" and "walk.js", which exist only in the temp root the scripts build:
 # lint them in the same shape.
 mkdir -p "$work/harness"

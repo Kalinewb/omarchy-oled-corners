@@ -35,7 +35,11 @@ root=$(mktemp -d "${TMPDIR:-/tmp}/oled-corners-render.XXXXXX")
 trap 'rm -rf "$root"' EXIT
 ln -s "$SHELL_PATH/shell/Commons" "$root/Commons"
 ln -s "$SHELL_PATH/shell/Ui" "$root/Ui"
-ln -s "$panel" "$root/repo"
+# The panel's folder, file by file, so a checkout from before the kit (no ui/) gets an empty one: the
+# harness imports "repo/ui" either way.
+mkdir "$root/repo"
+for f in "$panel"/*; do ln -s "$f" "$root/repo/${f##*/}"; done
+if [[ ! -d $root/repo/ui ]]; then mkdir "$root/repo/ui"; printf 'import QtQuick\nItem {}\n' >"$root/repo/ui/UNone.qml"; fi
 cp "$REPO/dev/harness/render.qml" "$root/shell.qml"
 
 render() { # render <mode> <host> <selected> <broken> <zone> <png>

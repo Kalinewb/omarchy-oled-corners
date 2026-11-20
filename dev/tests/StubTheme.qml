@@ -1,0 +1,79 @@
+import QtQuick
+
+// The surface of UTheme that the kit's components and the panel read, with fixed
+// values, so the panel's tests run under qmltestrunner with no Quickshell and no
+// qs.Commons (dev/panel-*.sh copy this over ui/UTheme.qml in a scratch tree; the
+// plugin's own ui/ is untouched). dev/tests/stub-surface.mjs keeps it honest:
+// every `theme.<name>` read by ui/ or CornersPanel.qml is declared here and in
+// UTheme.qml. It is the kit's dev/tests/qml/StubTheme.qml plus `host`, and a
+// density that follows it, as UTheme's does.
+QtObject {
+  property var host: null
+  readonly property string mode: host ? "hosted-opaque" : "standalone"
+  readonly property string density: host ? "notch" : "standalone"
+  property bool reduced: false
+
+  property color surface: "#000000"
+  property color label: "#ffffff"
+  property color secondary: "#8d8d93"
+  property color metadata: "#7e7e81"
+  property color accent: "#ffffff"
+  property color accentText: "#ffffff"
+  property color destructive: "#ff6b6b"
+  property color warning: "#e0a030"
+  property color fill: "#0a0a0a"
+  property color hover: "#141414"
+  property color selected: "#2e2e2e"
+  property color pressed: "#383838"
+  property color raised: "#141414"
+  property color hairline: "#6e6e6e"
+  property color ring: "#8e8e8e"
+  property color trackOn: "#ffffff"
+  property color knobOn: "#000000"
+  property color trackOff: "#0a0a0a"
+  property color knobOff: "#8d8d93"
+  property color disabled: "#5e5e5e"
+  readonly property color none: "transparent"
+
+  property string fontFamily: "monospace"
+  readonly property int bodySize: host ? 12 : 13
+  property int titleSize: 14
+  property int footnoteSize: 11
+  property int headlineWeight: Font.DemiBold
+  property int titleWeight: Font.DemiBold
+  property int metadataWeight: Font.Light
+
+  property int minHit: 24
+  readonly property int rowHeight: host ? 30 : 32
+  readonly property int controlHeight: rowHeight - 4
+  property int switchWidth: 42
+  property int switchHeight: 22
+  property int hairlineWidth: 1
+  property int tipMax: 60
+  function space(n) { return n }
+  readonly property QtObject sp: QtObject {
+    readonly property int xs: 4
+    readonly property int sm: 8
+    readonly property int md: 12
+    readonly property int lg: 16
+    readonly property int xl: 24
+    readonly property int xxl: 32
+  }
+  function radius(h) { return host && typeof host.radiusFor === "function" ? host.radiusFor(h) : Math.min(10, h / 2) }
+
+  property var arriveCurve: [0.3, 0.5, 0.7, 1.0, 1, 1]
+  property var controlCurve: [0.3, 0.5, 0.7, 1.0, 1, 1]
+  property var celebrateCurve: [0.3, 0.5, 0.7, 1.0, 1, 1]
+  property int arriveMs: reduced ? 0 : 350
+  property int controlMs: reduced ? 0 : 200
+  property int celebrateMs: reduced ? 0 : 450
+  property int exitMs: reduced ? 0 : 180
+  property int fadeOutMs: 90
+  property int fadeInMs: 150
+  property int focusMs: 90
+  property real pressScale: reduced ? 1 : 0.97
+  property int pressMs: reduced ? 0 : 60
+  property int ringMs: 900
+  function staggerDelay(i) { return reduced ? 0 : Math.min(i * 40, 240) }
+  property string foot: ""
+}

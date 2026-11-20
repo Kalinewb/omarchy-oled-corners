@@ -3,12 +3,15 @@ import QtQuick.Window
 import Quickshell
 import Quickshell.Io
 import qs.Commons as Commons
+import "repo/ui"
 
 // Renders the settings panel to a PNG, offscreen, on a stand-in surfaceHost
 // (radius 10, black or white) or on none (standalone), with a stand-in for
 // Surface.qml that has two screens. Run by dev/render.sh under Quickshell with
 // the OpenGL RHI (as the kit's dev/gallery.sh and omarchy-notch dev/glow.sh);
-// it opens no real window.
+// it opens no real window. `import "repo/ui"` is here only so the shell has
+// scanned the kit's folder before the panel (loaded under Quickshell's own
+// `qs:` scheme) asks for it, as the kit's own ui-walk.qml does.
 //
 //   UI_RENDER_ROOT      the panel file, relative to the repo (default CornersPanel.qml)
 //   UI_RENDER_MODE      hosted | standalone

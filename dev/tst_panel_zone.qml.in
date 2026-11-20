@@ -13,8 +13,10 @@ TestCase {
   QtObject {
     id: strip
     readonly property var features: ["panel", "panelBack", "backZone"]
+    readonly property color color: "#000000"
     readonly property color foreground: "#ffffff"
     readonly property color secondary: "#aaaaaa"
+    readonly property color accent: "#ffffff"
     readonly property string fontFamily: ""
     readonly property real backZoneWidth: 180
     readonly property real backZoneHeight: 32
@@ -24,8 +26,10 @@ TestCase {
   QtObject {
     id: plain
     readonly property var features: ["panel"]
+    readonly property color color: "#000000"
     readonly property color foreground: "#ffffff"
     readonly property color secondary: "#aaaaaa"
+    readonly property color accent: "#ffffff"
     readonly property string fontFamily: ""
     function radiusFor(size) { return 6 }
   }
@@ -56,19 +60,37 @@ TestCase {
   }
   function texts(item, out) {
     if (!item || !item.visible) return
-    if (typeof item.text === "string" && item.text !== "") out.push(item.text)
+    // Painted text only: a UTip carries its `text` whether or not it is showing.
+    if (typeof item.text === "string" && item.text !== "" && item.contentWidth !== undefined) out.push(item.text)
     for (var k = 0; k < item.children.length; k++) texts(item.children[k], out)
+  }
+
+  function find(item, text) {
+    if (!item) return null
+    if (item.text === text && item.contentWidth !== undefined) return item
+    for (var k = 0; k < item.children.length; k++) {
+      var hit = find(item.children[k], text)
+      if (hit) return hit
+    }
+    return null
+  }
+  function named(item, name, out) {
+    if (!item) return
+    if (item.Accessible !== undefined && item.Accessible.name === name && item.activeFocusOnTab) out.push(item)
+    for (var k = 0; k < item.children.length; k++) named(item.children[k], name, out)
   }
 
   function test_01_under_a_strip_nothing_is_pushed_down_and_the_heading_ends_before_the_zone() {
     var p = createTemporaryObject(make, tc, { surfaceHost: strip })
-    verify(p.children.length > 0)
-    var heading = null
-    for (var i = 0; i < p.children.length; i++) if (p.children[i].text === "OLED corners") heading = p.children[i]
+    var heading = find(p, "OLED corners")
     verify(heading !== null)
-    compare(Math.round(heading.y), 0)
+    // The header is at the top, as tall as the zone and no taller: the first row starts where the zone ends.
+    var at = heading.parent.mapToItem(p, 0, 0)
+    compare(Math.round(at.y), 0)
+    compare(Math.round(heading.parent.height), 32)
     verify(heading.implicitWidth <= heading.width, "the whole heading fits in the room beside the zone, unelided")
-    verify(heading.x + heading.contentWidth <= (p.width - 180) / 2, "its glyphs end before the zone starts")
+    var glyphs = heading.mapToItem(p, 0, 0).x + heading.contentWidth
+    verify(glyphs <= (p.width - 180) / 2, "its glyphs end before the zone starts")
   }
   function test_01b_no_text_paints_in_the_zone() {
     var p = createTemporaryObject(make, tc, { surfaceHost: strip })
@@ -87,12 +109,16 @@ TestCase {
     walk(p)
     compare(found.join(" | "), "")
   }
-  function test_02_no_esc_close_hint_is_drawn() {
+  function test_02_no_esc_close_hint_is_drawn_and_the_keys_are_named_in_a_tip() {
     var p = createTemporaryObject(make, tc, { surfaceHost: strip })
     var all = []
     texts(p, all)
     compare(all.join("|").indexOf("Esc"), -1)
-    verify(all.join("|").indexOf("radius · F  follow") !== -1, "the keys that are not obvious stay")
+    // The keys that are not obvious (F, Backspace) stay, in the tip on the foot line: it arms 250 ms after focus.
+    tryVerify(function () { var t = []; texts(p, t); return t.join("|").indexOf("follow the level above") !== -1 }, 2000, "the tip names F")
+    var tip = []
+    texts(p, tip)
+    compare(tip.join("|").indexOf("Esc"), -1, "and the tip does not mention Esc either")
   }
   function test_03_nothing_that_takes_a_press_is_in_the_zone() {
     var p = createTemporaryObject(make, tc, { surfaceHost: strip })
@@ -104,11 +130,22 @@ TestCase {
     var p = createTemporaryObject(make, tc, { surfaceHost: strip })
     compare(p.goBackInside(), false)
   }
-  function test_05_with_no_strip_nothing_moves() {
+  function test_05_with_no_strip_there_is_no_zone_and_the_heading_has_its_full_width() {
     var p = createTemporaryObject(make, tc, { surfaceHost: plain })
-    var heading = null
-    for (var i = 0; i < p.children.length; i++) if (p.children[i].text === "OLED corners") heading = p.children[i]
-    compare(Math.round(heading.y), 0)
+    var heading = find(p, "OLED corners")
+    compare(Math.round(heading.parent.mapToItem(p, 0, 0).y), 0)
+    verify(heading.width > p.width / 2, "not held to the room beside a zone that is not there")
+    compare(p.zoneWidth, 0)
+  }
+  function test_06b_one_close_and_no_back_of_our_own() {
+    var p = createTemporaryObject(make, tc, { surfaceHost: strip })
+    var closes = [], backs = []
+    named(p, "Close", closes)
+    named(p, "Back", backs)
+    compare(closes.length, 1, "one close, at the top right")
+    compare(backs.length, 0, "the strip is the one back; this page draws none")
+    var at = closes[0].mapToItem(p, 0, 0)
+    verify(at.x >= (p.width + 180) / 2, "the close is right of the zone")
   }
   function test_06_esc_still_closes() {
     var p = createTemporaryObject(make, tc, { surfaceHost: strip })

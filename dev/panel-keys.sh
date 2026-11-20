@@ -17,7 +17,11 @@ RUNNER=/usr/lib/qt6/bin/qmltestrunner
 
 work=$(mktemp -d /tmp/oled-corners-keys.XXXXXX)
 trap 'rm -rf "$work"' EXIT
-sed -e "s#@REPO@#$REPO#g" "$REPO/dev/tst_panel_keys.qml.in" >"$work/tst_panel_keys.qml"
+# The panel on the vendored kit, with the kit's theme swapped for a stub that needs no Quickshell and no
+# qs.Commons (qmltestrunner has neither). A scratch copy: the plugin's own ui/ is untouched.
+stage="$work/panel"; mkdir -p "$stage"
+cp "$REPO/CornersPanel.qml" "$stage/"; cp -r "$REPO/ui" "$stage/ui"; cp "$REPO/dev/tests/StubTheme.qml" "$stage/ui/UTheme.qml"
+sed -e "s#@REPO@#$stage#g" "$REPO/dev/tst_panel_keys.qml.in" >"$work/tst_panel_keys.qml"
 out=$(cd "$work" && QT_QPA_PLATFORM=offscreen XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-$work}" timeout 60 "$RUNNER" -input "$work" 2>&1)
 failures=0; checks=0
 while IFS= read -r line; do

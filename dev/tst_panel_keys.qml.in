@@ -33,7 +33,8 @@ TestCase {
     property bool writable: true
     property bool loaded: true
     property var calls: []
-    function radiusOf(m) { return m === "DP-2" ? 28 : -1 }
+    property var radii: ({})
+    function radiusOf(m) { return radii[m] !== undefined ? radii[m] : (m === "DP-2" ? 28 : -1) }
     function followRadius(m) { return 10 }
     function nudge(m, d) { calls = calls.concat(["nudge " + (m || "all") + " " + d]) }
     function follow(m) { calls = calls.concat(["follow " + (m || "all")]) }
@@ -41,7 +42,7 @@ TestCase {
 
   Component { id: make; Corners.CornersPanel { integration: stub; surfaceHost: host; width: 420 } }
 
-  function init() { stub.calls = []; stub.screenNames = ["eDP-1", "DP-2"] }
+  function init() { stub.calls = []; stub.radii = ({}); stub.screenNames = ["eDP-1", "DP-2"] }
   function panel() {
     var p = createTemporaryObject(make, tc)
     p.forceActiveFocus()
@@ -140,4 +141,90 @@ TestCase {
     keyClick(Qt.Key_Down)
     compare(p.selected, 0, "only the global row exists")
   }
+
+  // ---- what the kit adds (the unchanged 1.1.0 panel had none of this: no tip to dismiss, no tab stops)
+
+  function all(item, out) {
+    if (!item || !item.visible) return
+    if (item.activeFocusOnTab) out.push(item)
+    for (var k = 0; k < item.children.length; k++) all(item.children[k], out)
+  }
+  function byName(p, name) {
+    var found = []
+    all(p, found)
+    for (var i = 0; i < found.length; i++) if (found[i].Accessible.name === name) return found[i]
+    return null
+  }
+  function texts(item, out) {
+    if (!item || !item.visible) return
+    // Painted text only: a UTip carries its `text` whether or not it is showing.
+    if (typeof item.text === "string" && item.text !== "" && item.contentWidth !== undefined) out.push(item.text)
+    for (var k = 0; k < item.children.length; k++) texts(item.children[k], out)
+  }
+  function withName(item, name, out) {
+    if (!item || !item.visible) return
+    if (item.Accessible !== undefined && item.Accessible.name === name) out.push(item)
+    for (var k = 0; k < item.children.length; k++) withName(item.children[k], name, out)
+  }
+
+  function test_12_esc_dismisses_the_tip_before_it_closes() {
+    var p = panel()
+    var closed = 0
+    p.closeRequested.connect(function () { closed++ })
+    tryVerify(function () { var t = []; texts(p, t); return t.join("|").indexOf("follow the level above") !== -1 }, 2000, "the tip arms on focus")
+    keyClick(Qt.Key_Escape)
+    compare(closed, 0, "the first Esc puts the tip away")
+    keyClick(Qt.Key_Escape)
+    compare(closed, 1, "the second closes")
+  }
+  function test_13_each_row_has_a_stepper_and_a_follow_button_that_tab_reaches() {
+    var p = panel()
+    var stops = []
+    all(p, stops)
+    var names = stops.map(function (i) { return i.Accessible.name })
+    // A Follow that has nothing to hand back is disabled, and a disabled control is not a tab stop.
+    compare(names.join("|"), "Close|All monitors radius 10 px|eDP-1 radius 10 px|DP-2 radius 28 px|Follow")
+  }
+  function test_14_follow_is_off_for_a_row_that_already_follows_and_on_for_one_that_has_a_value() {
+    var p = panel()
+    var follows = []
+    withName(p, "Follow", follows)
+    compare(follows.length, 3)
+    compare(follows[0].enabled, false)
+    compare(follows[1].enabled, false)
+    compare(follows[2].enabled, true)
+    follows[2].clicked()
+    compare(stub.calls.join("|"), "follow DP-2")
+    compare(p.selected, 2)
+  }
+  function test_15_the_minus_and_plus_cells_pick_their_row_and_step_it() {
+    var p = panel()
+    var step = byName(p, "DP-2 radius 28 px")
+    verify(step !== null)
+    mouseClick(step, step.width - 10, step.height / 2)
+    compare(stub.calls.join("|"), "nudge DP-2 1")
+    compare(p.selected, 2)
+    mouseClick(step, 10, step.height / 2)
+    compare(stub.calls.join("|"), "nudge DP-2 1|nudge DP-2 -1")
+  }
+  function test_16_clicking_a_row_picks_it_and_the_keyboard_follows() {
+    var p = panel()
+    var row = byName(p, "eDP-1 radius 10 px")
+    var at = row.mapToItem(p, 0, 0)
+    mouseClick(p, at.x - 60, at.y + row.height / 2)
+    compare(p.selected, 1)
+    compare(row.activeFocus, true)
+    keyClick(Qt.Key_Right)
+    compare(stub.calls.join("|"), "nudge eDP-1 1")
+  }
+  function test_17_the_stepper_does_not_go_past_its_ends() {
+    var p = panel()
+    stub.radii = { "": 0 }
+    var step = byName(p, "All monitors radius 0 px")
+    verify(step !== null)
+    keyClick(Qt.Key_Left)
+    compare(stub.calls.length, 0, "at 0 there is nothing lower to write")
+    stub.radii = {}
+  }
 }
+
