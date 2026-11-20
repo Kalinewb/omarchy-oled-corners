@@ -46,20 +46,22 @@ Item {
 
   function open(next) { panel.selected = 0 }
 
-  // The notch's back strip is at the top centre of the panel and a press anywhere in it goes back, so
-  // nothing here may sit under it: the heading starts below its zone (`backZoneHeight`; the resting
-  // height when the host has a strip but names no zone; nothing with no strip at all).
+  // The notch's back strip is a zone at the top CENTRE of the panel (`backZoneWidth` by `backZoneHeight`)
+  // and a press anywhere in it goes back, so no control and no text of ours may sit in it. Nothing is
+  // pushed down for it: the heading is at the left, as it always was, and is held to the room between
+  // the panel's edge and the zone (elided if it ever had to be longer); the rows have their name at the
+  // left and their value at the right. With no strip there is no zone and the heading has its full width.
   readonly property bool hostHasBack: !!surfaceHost && !!surfaceHost.features && surfaceHost.features.indexOf("panelBack") !== -1
-  readonly property real zoneHeight: !surfaceHost ? 0
-    : surfaceHost.backZoneHeight > 0 ? surfaceHost.backZoneHeight
-    : (hostHasBack && surfaceHost.restHeight > 0) ? surfaceHost.restHeight : 0
+  readonly property real zoneWidth: !surfaceHost ? 0
+    : surfaceHost.backZoneWidth > 0 ? surfaceHost.backZoneWidth
+    : (hostHasBack && surfaceHost.restWidth > 0) ? surfaceHost.restWidth : 0
 
   // A single page: the strip's first ask has nothing to step back inside, so it answers no and the host
   // goes back to where this was opened from, or closes. Esc is the strip's invisible alias.
   function goBackInside() { return false }
 
-  implicitWidth: Math.min(maxWidth, 380)
-  implicitHeight: Math.min(maxHeight, zoneHeight + header.height + list.height + hint.height + 8)
+  implicitWidth: Math.min(maxWidth, 420)
+  implicitHeight: Math.min(maxHeight, header.height + list.height + hint.height + 8)
 
   focus: true
   Keys.onEscapePressed: panel.closeRequested()
@@ -78,12 +80,15 @@ Item {
   Text {
     id: header
     x: 14
-    y: panel.zoneHeight
+    y: 0
+    width: panel.zoneWidth > 0 ? Math.max(40, (panel.width - panel.zoneWidth) / 2 - 14 - 4) : panel.width - 28
+    elide: Text.ElideRight
     text: "OLED corners"
     color: panel.foreground
     font.family: panel.fontFamily
     font.pixelSize: 13
-    height: 26
+    // As tall as the zone, so the first row (a press target across the panel) starts below it.
+    height: Math.max(26, panel.hostHasBack && panel.surfaceHost ? panel.surfaceHost.backZoneHeight : 0)
     verticalAlignment: Text.AlignVCenter
   }
 

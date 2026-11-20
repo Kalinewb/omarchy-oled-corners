@@ -40,7 +40,7 @@ TestCase {
     function follow(m) {}
   }
 
-  Component { id: make; Corners.CornersPanel { integration: stub; width: 380 } }
+  Component { id: make; Corners.CornersPanel { integration: stub; width: 420 } }
 
   function press(item, hits) {
     // Everything under `item` that takes a press and overlaps the zone (a 180 x 32 band at the top centre).
@@ -60,13 +60,32 @@ TestCase {
     for (var k = 0; k < item.children.length; k++) texts(item.children[k], out)
   }
 
-  function test_01_under_a_strip_the_heading_starts_below_the_zone() {
+  function test_01_under_a_strip_nothing_is_pushed_down_and_the_heading_ends_before_the_zone() {
     var p = createTemporaryObject(make, tc, { surfaceHost: strip })
     verify(p.children.length > 0)
     var heading = null
     for (var i = 0; i < p.children.length; i++) if (p.children[i].text === "OLED corners") heading = p.children[i]
     verify(heading !== null)
-    compare(Math.round(heading.y), 32)
+    compare(Math.round(heading.y), 0)
+    verify(heading.implicitWidth <= heading.width, "the whole heading fits in the room beside the zone, unelided")
+    verify(heading.x + heading.contentWidth <= (p.width - 180) / 2, "its glyphs end before the zone starts")
+  }
+  function test_01b_no_text_paints_in_the_zone() {
+    var p = createTemporaryObject(make, tc, { surfaceHost: strip })
+    var zone = { x: (p.width - 180) / 2, w: 180, h: 32 }
+    var found = []
+    function walk(i) {
+      if (!i || !i.visible) return
+      if (typeof i.text === "string" && i.text !== "" && i.contentWidth !== undefined) {
+        var at = i.mapToItem(p, 0, 0)
+        var cw = Math.min(i.contentWidth, i.width)
+        var off = i.effectiveHorizontalAlignment === Qt.AlignRight ? i.width - cw : i.effectiveHorizontalAlignment === Qt.AlignHCenter ? (i.width - cw) / 2 : 0
+        if (at.x + off < zone.x + zone.w && at.x + off + cw > zone.x && at.y < zone.h && at.y + i.height > 0) found.push(i.text + "@" + Math.round(at.x + off) + "," + Math.round(at.y))
+      }
+      for (var k = 0; k < i.children.length; k++) walk(i.children[k])
+    }
+    walk(p)
+    compare(found.join(" | "), "")
   }
   function test_02_no_esc_close_hint_is_drawn() {
     var p = createTemporaryObject(make, tc, { surfaceHost: strip })

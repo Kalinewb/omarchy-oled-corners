@@ -5,8 +5,8 @@
 #   ./dev/panel-zone.sh
 #
 # The notch's strip at the top centre of every panel is the one visible way back and Esc its invisible
-# alias (notch SURFACE-HOSTING.md section 15). So this panel shows no "Esc  close" hint, starts its
-# heading below the strip's zone (surfaceHost.backZoneHeight), and answers the strip's first press with
+# alias (notch SURFACE-HOSTING.md section 15). So this panel shows no "Esc  close" hint, keeps the zone's
+# centre clear by layout (heading at the left, ending before it; nothing pushed down), and answers the strip's first press with
 # "no, nothing to step back inside" so the notch goes back to where it was opened from, or closes.
 # qmltestrunner, offscreen: CornersPanel.qml on a stand-in host, no shell, no window.
 
