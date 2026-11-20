@@ -32,7 +32,7 @@ Item {
 
   // -1 means "follow Hyprland" — 0 is a real value (square corners).
   property int configRadius: -1
-  property color cornerColor: "#000000"
+  property color cornerColor: "#000000" // ui-allow: the corners are pure black, the point of the plugin
   property var perMonitorRadius: ({})
 
   property var panelLayer: ({})
@@ -90,7 +90,7 @@ Item {
     configPower = (isFinite(p) && p >= 1) ? p : -1
 
     var c = String(next.color || "").trim()
-    cornerColor = c ? c : "#000000"
+    cornerColor = c ? c : "#000000" // ui-allow: the same default
 
     perMonitorRadius = (next.monitors && typeof next.monitors === "object") ? next.monitors : ({})
   }
