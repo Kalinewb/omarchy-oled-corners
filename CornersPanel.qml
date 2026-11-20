@@ -164,6 +164,20 @@ FocusScope {
             }
             Component.onCompleted: if (line.index === panel.selected) step.forceActiveFocus()
 
+            // The selected row, marked by an accent bar in the margin (the kit's accent role). It
+            // sits beside the row, not under its text, so no text contrast changes, and it reads
+            // without the keyboard ring: focus and selection are different things.
+            Rectangle {
+              x: -panel.theme.sp.md
+              anchors.verticalCenter: parent.verticalCenter
+              width: panel.theme.sp.xs
+              height: Math.round(parent.height * 0.6)
+              radius: panel.theme.radius(width)
+              color: line.index === panel.selected ? panel.theme.accent : panel.theme.none
+              property bool uiMark: true
+              Behavior on color { ColorAnimation { duration: panel.theme.focusMs } }
+            }
+
             // A press anywhere on the row picks it.
             MouseArea {
               anchors.fill: parent
