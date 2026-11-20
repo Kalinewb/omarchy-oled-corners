@@ -80,16 +80,19 @@ The file is watched — edits apply immediately, no restart.
 If you run the [Notch](https://github.com/Kalinewb/omarchy-notch) as your bar,
 OLED Corners offers it a settings panel that opens **inside the notch**, in the
 notch's own colours and corner radius. It lists "All monitors" and one row per
-screen:
+screen, each with a radius stepper (`−` / `+`) and a **Follow** button:
 
 | Key        | What it does                                                        |
 |------------|---------------------------------------------------------------------|
 | `←` / `→`  | Radius down / up by one pixel (also the `−` and `+` buttons)        |
-| `F` or `⌫` | **Follow**: hand the row back to the level above it                 |
+| `F` or `⌫` | **Follow**: hand the row back to the level above it (also the Follow button) |
 | `↑` / `↓`  | Pick a row                                                          |
-| `Esc`      | Close                                                               |
+| `Tab`      | Move between the controls                                           |
+| `Esc`      | Put a tip away if one is showing, otherwise close (also the `✕`)    |
 
-A row set to **Follow** shows what it will use, for example `Follow · 22 px`.
+The keys are named in a tip on the foot line, not printed on the panel. A row
+set to **Follow** says "Following" and shows the radius it will use in the
+stepper, for example `22 px`.
 
 Open it from a keybind, the Omarchy menu or a script:
 
@@ -116,6 +119,24 @@ So **Follow** on a row falls back to your file and Hyprland, and deleting
 not valid JSON the panel says so and refuses to write rather than overwrite
 what you typed.
 
+## The UI kit
+
+The panel is built on the shared UI kit of the kalinewb plugins,
+`omarchy-ui` (Kalinewb/omarchy-ui): rows, a stepper, buttons,
+tips and one Esc handler, in the notch's own colours (every one an opaque solid,
+as the surface contract asks), the one spacing scale and three text levels.
+**There are no external dependencies at run time**: `ui/` is vendored from
+omarchy-ui, copied in whole by `dev/sync-ui.sh`, hashed in `ui/KIT` and never
+edited here (a fix goes to omarchy-ui and comes back through a re-sync).
+`Corners.qml`, the service that draws the corners, does not use it.
+
+**Reduced motion.** `OMARCHY_REDUCED_MOTION=1` in the environment turns reduced
+motion on; `NOTCH_REDUCED_MOTION=1` is an alias that the notch and the kit both
+read; a host may provide `reducedMotion` instead. (`OMARCHY_` is only a prefix:
+it is not an Omarchy variable, and omarchy-ui's README is its one definition.)
+When on, springs are off, `press` and `stagger` are off, fades stay and loops
+stop on their final frame. The panel has no loops of its own.
+
 ## Without the notch
 
 The notch is optional and nothing depends on it. Under another bar, or with the
@@ -131,6 +152,18 @@ The integration follows the notch's
 [surface contract](https://github.com/Kalinewb/omarchy-notch/blob/master/SURFACE-HOSTING.md),
 version 1: `Surface.qml` is declared in the manifest and draws no window of its
 own.
+
+## Development
+
+Nothing here is needed to run the plugin. Everything is offscreen; nothing is
+installed or reloaded.
+
+```bash
+./dev/test.sh                       # lint, radius.js, the panel's zone and keys, the UI gate and its walk
+./dev/check-ui.sh --score --walk CornersPanel.qml
+./dev/render.sh --all docs/screens  # the panel on a stand-in host, black and white, and standalone
+../omarchy-ui/dev/sync-ui.sh --from ../omarchy-ui --to . --tools --only UClose,UButton,UNotice,URow,USection,UStepper,UKeys
+```
 
 ## Compatibility
 
