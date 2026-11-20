@@ -1,0 +1,143 @@
+import QtQuick
+import QtTest
+import "file://@REPO@" as Corners
+
+// The keys of the settings panel, and what each one writes. The stand-in for
+// Surface.qml records every call the panel makes (nudge, follow), so "the same
+// keys write the same settings" is checked against that record, not against
+// how the rows look.
+TestCase {
+  id: tc
+  name: "PanelKeys"
+  width: 420
+  height: 300
+  visible: true
+  when: windowShown
+
+  QtObject {
+    id: host
+    readonly property var features: ["panel", "panelBack", "backZone"]
+    readonly property color color: "#000000"
+    readonly property color foreground: "#ffffff"
+    readonly property color secondary: "#aaaaaa"
+    readonly property color accent: "#ffffff"
+    readonly property string fontFamily: ""
+    readonly property real backZoneWidth: 180
+    readonly property real backZoneHeight: 32
+    readonly property real restHeight: 32
+    function radiusFor(size) { return 6 }
+  }
+  QtObject {
+    id: stub
+    property var screenNames: ["eDP-1", "DP-2"]
+    property bool writable: true
+    property bool loaded: true
+    property var calls: []
+    function radiusOf(m) { return m === "DP-2" ? 28 : -1 }
+    function followRadius(m) { return 10 }
+    function nudge(m, d) { calls = calls.concat(["nudge " + (m || "all") + " " + d]) }
+    function follow(m) { calls = calls.concat(["follow " + (m || "all")]) }
+  }
+
+  Component { id: make; Corners.CornersPanel { integration: stub; surfaceHost: host; width: 420 } }
+
+  function init() { stub.calls = []; stub.screenNames = ["eDP-1", "DP-2"] }
+  function panel() {
+    var p = createTemporaryObject(make, tc)
+    p.forceActiveFocus()
+    verify(p.activeFocus, "the panel takes the keyboard")
+    return p
+  }
+
+  function test_01_three_rows_and_the_first_is_selected() {
+    var p = panel()
+    compare(p.rows.length, 3)
+    compare(p.rows[0].monitor, "")
+    compare(p.rows[1].monitor, "eDP-1")
+    compare(p.selected, 0)
+  }
+  function test_02_left_and_right_step_the_selected_row() {
+    var p = panel()
+    keyClick(Qt.Key_Right)
+    keyClick(Qt.Key_Left)
+    keyClick(Qt.Key_Left)
+    compare(stub.calls.join("|"), "nudge all 1|nudge all -1|nudge all -1")
+  }
+  function test_03_down_and_up_move_between_rows_and_stop_at_the_ends() {
+    var p = panel()
+    keyClick(Qt.Key_Up)
+    compare(p.selected, 0)
+    keyClick(Qt.Key_Down)
+    compare(p.selected, 1)
+    keyClick(Qt.Key_Down)
+    keyClick(Qt.Key_Down)
+    compare(p.selected, 2)
+    keyClick(Qt.Key_Up)
+    compare(p.selected, 1)
+  }
+  function test_04_the_arrows_act_on_the_row_that_is_selected() {
+    var p = panel()
+    keyClick(Qt.Key_Down)
+    keyClick(Qt.Key_Right)
+    keyClick(Qt.Key_Down)
+    keyClick(Qt.Key_Left)
+    compare(stub.calls.join("|"), "nudge eDP-1 1|nudge DP-2 -1")
+  }
+  function test_05_f_hands_the_row_back() {
+    var p = panel()
+    keyClick(Qt.Key_F)
+    keyClick(Qt.Key_Down)
+    keyClick(Qt.Key_F)
+    compare(stub.calls.join("|"), "follow all|follow eDP-1")
+  }
+  function test_06_backspace_does_the_same() {
+    var p = panel()
+    keyClick(Qt.Key_Down)
+    keyClick(Qt.Key_Down)
+    keyClick(Qt.Key_Backspace)
+    compare(stub.calls.join("|"), "follow DP-2")
+  }
+  function test_07_esc_closes() {
+    var p = panel()
+    var closed = 0
+    p.closeRequested.connect(function () { closed++ })
+    keyClick(Qt.Key_Escape)
+    compare(closed, 1)
+    compare(stub.calls.length, 0, "and writes nothing")
+  }
+  function test_08_other_keys_do_nothing() {
+    var p = panel()
+    keyClick(Qt.Key_G)
+    keyClick(Qt.Key_Space)
+    keyClick(Qt.Key_Return)
+    keyClick(Qt.Key_Delete)
+    compare(stub.calls.length, 0)
+    compare(p.selected, 0)
+  }
+  function test_09_a_monitor_unplugged_keeps_the_selection_in_range() {
+    var p = panel()
+    keyClick(Qt.Key_Down)
+    keyClick(Qt.Key_Down)
+    compare(p.selected, 2)
+    stub.screenNames = ["eDP-1"]
+    compare(p.rows.length, 2)
+    compare(p.selected, 1)
+    keyClick(Qt.Key_Right)
+    compare(stub.calls.join("|"), "nudge eDP-1 1")
+  }
+  function test_10_a_new_open_starts_on_all_monitors() {
+    var p = panel()
+    keyClick(Qt.Key_Down)
+    compare(p.selected, 1)
+    p.open("main")
+    compare(p.selected, 0)
+  }
+  function test_11_without_an_integration_the_keys_write_nothing_and_do_not_throw() {
+    var p = createTemporaryObject(make, tc, { integration: null })
+    p.forceActiveFocus()
+    keyClick(Qt.Key_Right)
+    keyClick(Qt.Key_F)
+    keyClick(Qt.Key_Down)
+    compare(p.selected, 0, "only the global row exists")
+  }
+}

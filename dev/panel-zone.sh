@@ -22,7 +22,7 @@ sed -e "s#@REPO@#$REPO#g" "$REPO/dev/tst_panel_zone.qml.in" >"$work/tst_panel_zo
 out=$(cd "$work" && QT_QPA_PLATFORM=offscreen XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-$work}" timeout 60 "$RUNNER" -input "$work" 2>&1)
 failures=0; checks=0
 while IFS= read -r line; do
-  name=${line#* : PanelZone::}; name=${name%%(*}
+  name=${line#*::}; name=${name#*::}; name=${name%%(*}
   checks=$((checks + 1))
   case $line in
     PASS*) echo "  ${GREEN}pass${RESET}  ${name#test_}" ;;
