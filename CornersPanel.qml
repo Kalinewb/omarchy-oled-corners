@@ -46,8 +46,20 @@ Item {
 
   function open(next) { panel.selected = 0 }
 
+  // The notch's back strip is at the top centre of the panel and a press anywhere in it goes back, so
+  // nothing here may sit under it: the heading starts below its zone (`backZoneHeight`; the resting
+  // height when the host has a strip but names no zone; nothing with no strip at all).
+  readonly property bool hostHasBack: !!surfaceHost && !!surfaceHost.features && surfaceHost.features.indexOf("panelBack") !== -1
+  readonly property real zoneHeight: !surfaceHost ? 0
+    : surfaceHost.backZoneHeight > 0 ? surfaceHost.backZoneHeight
+    : (hostHasBack && surfaceHost.restHeight > 0) ? surfaceHost.restHeight : 0
+
+  // A single page: the strip's first ask has nothing to step back inside, so it answers no and the host
+  // goes back to where this was opened from, or closes. Esc is the strip's invisible alias.
+  function goBackInside() { return false }
+
   implicitWidth: Math.min(maxWidth, 380)
-  implicitHeight: Math.min(maxHeight, header.height + list.height + hint.height + 8)
+  implicitHeight: Math.min(maxHeight, zoneHeight + header.height + list.height + hint.height + 8)
 
   focus: true
   Keys.onEscapePressed: panel.closeRequested()
@@ -66,6 +78,7 @@ Item {
   Text {
     id: header
     x: 14
+    y: panel.zoneHeight
     text: "OLED corners"
     color: panel.foreground
     font.family: panel.fontFamily
@@ -169,7 +182,7 @@ Item {
     elide: Text.ElideRight
     text: panel.integration && !panel.integration.writable && panel.integration.loaded
       ? "panel.json is not valid JSON · fix or delete it"
-      : "← →  radius · F  follow · Esc  close"
+      : "← →  radius · F  follow"
     color: panel.secondary
     font.family: panel.fontFamily
     font.pixelSize: 11

@@ -37,12 +37,41 @@ Item {
 
   property var panelLayer: ({})
 
+  // The curve is a circle unless oled-corners.json says otherwise ("power": 2 is
+  // a circle, higher is squarer). It is not Hyprland's rounding_power: a squircle
+  // that small reads as a chamfer, and a circle leaves the screen edge tangentially.
+  property real configPower: -1
+  readonly property real power: configPower >= 1 ? configPower : 2
+
+  // The curve as a polygon on a box whose corner is at (0, 0): the squircle
+  // |x|^p + |y|^p = r^p about the point (r, r), from the top edge to the left edge.
+  function wedge(r, power) {
+    var pts = [Qt.point(0, 0), Qt.point(r, 0)]
+    var e = 2 / power
+    var steps = 48
+    for (var i = 0; i <= steps; i++) {
+      var t = (Math.PI / 2) * (1 - i / steps)
+      pts.push(Qt.point(r - r * Math.pow(Math.cos(t), e), r - r * Math.pow(Math.sin(t), e)))
+    }
+    pts.push(Qt.point(0, r))
+    return pts
+  }
+
+  // Style re-reads rounding on some events, but a change made live (hyprctl eval,
+  // a profile switch) does not always raise one, so ask again now and then.
+  Timer {
+    interval: 2000
+    running: true
+    repeat: true
+    onTriggered: Style.refresh()
+  }
+
   // Named monitors win over the global radius, so a square-cornered external
   // display can sit next to a rounded laptop panel. Radius.js is shared with
   // the settings panel, so what it shows is what is painted here.
   function radiusFor(screen) {
     var name = screen && screen.name ? String(screen.name) : ""
-    return Radius.resolve(panelLayer, { radius: configRadius, monitors: perMonitorRadius }, name, Style.cornerRadius)
+    return Radius.resolve(panelLayer, { radius: configRadius, monitors: perMonitorRadius }, name, Radius.follow(Style.cornerRadius))
   }
 
   function applyConfig(raw) {
@@ -56,6 +85,9 @@ Item {
 
     var r = Number(next.radius)
     configRadius = (isFinite(r) && r >= 0) ? Math.round(r) : -1
+
+    var p = Number(next.power)
+    configPower = (isFinite(p) && p >= 1) ? p : -1
 
     var c = String(next.color || "").trim()
     cornerColor = c ? c : "#000000"
@@ -105,6 +137,7 @@ Item {
         radius: root.configRadius >= 0 ? root.configRadius : null,
         panel: root.panelLayer,
         hyprlandRounding: Style.cornerRadius,
+        followRadius: Radius.follow(Style.cornerRadius),
         color: String(root.cornerColor),
         monitors: out
       })
@@ -220,15 +253,9 @@ Item {
 
               startX: 0
               startY: 0
-              PathLine { x: panel.radius; y: 0 }
-              PathArc {
-                x: 0
-                y: panel.radius
-                radiusX: panel.radius
-                radiusY: panel.radius
-                direction: PathArc.Counterclockwise
+              PathPolyline {
+                path: root.wedge(panel.radius, root.power)
               }
-              PathLine { x: 0; y: 0 }
             }
           }
         }

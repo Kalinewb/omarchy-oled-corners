@@ -11,6 +11,14 @@
 // Within the panel layer a named monitor beats "All monitors"; "All monitors"
 // beats everything in the hand-written file, including its per-monitor radii.
 
+// What "follow Hyprland" paints with: a circle bigger than the windows' own
+// corner, so it contains that corner and its antialiased edge, and leaves the
+// screen edge tangentially instead of looking padded on.
+var FOLLOW = 1.25
+function follow(hypr) {
+  return Math.round(Math.max(0, hypr) * FOLLOW)
+}
+
 // A radius from the panel's own file: a whole number >= 0, or -1 for "not set".
 function stored(value) {
   if (value === undefined || value === null || value === "" || typeof value === "boolean") return -1

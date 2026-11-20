@@ -46,7 +46,7 @@ Item {
   readonly property bool writable: loaded && !broken
 
   // What "Follow Hyprland" resolves to right now.
-  readonly property int hyprRadius: Math.max(0, Style.cornerRadius)
+  readonly property int hyprRadius: Radius.follow(Style.cornerRadius)
 
   readonly property var screenNames: {
     var out = []

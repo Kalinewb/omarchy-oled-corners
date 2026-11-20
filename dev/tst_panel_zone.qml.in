@@ -1,0 +1,102 @@
+import QtQuick
+import QtTest
+import "file://@REPO@" as Corners
+
+TestCase {
+  id: tc
+  name: "PanelZone"
+  width: 400
+  height: 300
+  visible: true
+  when: windowShown
+
+  QtObject {
+    id: strip
+    readonly property var features: ["panel", "panelBack", "backZone"]
+    readonly property color foreground: "#ffffff"
+    readonly property color secondary: "#aaaaaa"
+    readonly property string fontFamily: ""
+    readonly property real backZoneWidth: 180
+    readonly property real backZoneHeight: 32
+    readonly property real restHeight: 32
+    function radiusFor(size) { return 6 }
+  }
+  QtObject {
+    id: plain
+    readonly property var features: ["panel"]
+    readonly property color foreground: "#ffffff"
+    readonly property color secondary: "#aaaaaa"
+    readonly property string fontFamily: ""
+    function radiusFor(size) { return 6 }
+  }
+  QtObject {
+    id: stub
+    property var screenNames: ["eDP-1"]
+    property bool writable: true
+    property bool loaded: true
+    function radiusOf(m) { return -1 }
+    function followRadius(m) { return 10 }
+    function nudge(m, d) {}
+    function follow(m) {}
+  }
+
+  Component { id: make; Corners.CornersPanel { integration: stub; width: 380 } }
+
+  function press(item, hits) {
+    // Everything under `item` that takes a press and overlaps the zone (a 180 x 32 band at the top centre).
+    var zone = { x: (item.width - 180) / 2, y: 0, w: 180, h: 32 }
+    function walk(i) {
+      if (!i || !i.visible) return
+      var at = i.mapToItem(item, 0, 0)
+      if (i.acceptedButtons !== undefined && i.acceptedButtons !== 0 && i.width > 0 && i.height > 0
+          && at.x < zone.x + zone.w && at.x + i.width > zone.x && at.y < zone.h && at.y + i.height > 0) hits.push(at.x + "," + at.y)
+      for (var k = 0; k < i.children.length; k++) walk(i.children[k])
+    }
+    walk(item)
+  }
+  function texts(item, out) {
+    if (!item || !item.visible) return
+    if (typeof item.text === "string" && item.text !== "") out.push(item.text)
+    for (var k = 0; k < item.children.length; k++) texts(item.children[k], out)
+  }
+
+  function test_01_under_a_strip_the_heading_starts_below_the_zone() {
+    var p = createTemporaryObject(make, tc, { surfaceHost: strip })
+    verify(p.children.length > 0)
+    var heading = null
+    for (var i = 0; i < p.children.length; i++) if (p.children[i].text === "OLED corners") heading = p.children[i]
+    verify(heading !== null)
+    compare(Math.round(heading.y), 32)
+  }
+  function test_02_no_esc_close_hint_is_drawn() {
+    var p = createTemporaryObject(make, tc, { surfaceHost: strip })
+    var all = []
+    texts(p, all)
+    compare(all.join("|").indexOf("Esc"), -1)
+    verify(all.join("|").indexOf("radius · F  follow") !== -1, "the keys that are not obvious stay")
+  }
+  function test_03_nothing_that_takes_a_press_is_in_the_zone() {
+    var p = createTemporaryObject(make, tc, { surfaceHost: strip })
+    var hits = []
+    press(p, hits)
+    compare(hits.join(" "), "")
+  }
+  function test_04_the_strips_first_press_is_answered_no() {
+    var p = createTemporaryObject(make, tc, { surfaceHost: strip })
+    compare(p.goBackInside(), false)
+  }
+  function test_05_with_no_strip_nothing_moves() {
+    var p = createTemporaryObject(make, tc, { surfaceHost: plain })
+    var heading = null
+    for (var i = 0; i < p.children.length; i++) if (p.children[i].text === "OLED corners") heading = p.children[i]
+    compare(Math.round(heading.y), 0)
+  }
+  function test_06_esc_still_closes() {
+    var p = createTemporaryObject(make, tc, { surfaceHost: strip })
+    var closed = 0
+    p.closeRequested.connect(function () { closed++ })
+    p.forceActiveFocus()
+    keyClick(Qt.Key_Escape)
+    compare(closed, 1)
+  }
+}
