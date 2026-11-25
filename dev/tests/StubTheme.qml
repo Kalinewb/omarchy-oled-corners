@@ -12,6 +12,7 @@ QtObject {
   readonly property string mode: host ? "hosted-opaque" : "standalone"
   readonly property string density: host ? "notch" : "standalone"
   property bool reduced: false
+  property bool hostHasBack: false
 
   property color surface: "#000000"
   property color label: "#ffffff"
