@@ -146,7 +146,6 @@ FocusScope {
         first: true
 
         Repeater {
-          id: rowList
           model: panel.rows
 
           Item {

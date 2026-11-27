@@ -192,7 +192,6 @@ Item {
   }
 
   FileView {
-    id: configFile
     path: root.configPath
     watchChanges: true
     printErrors: false
