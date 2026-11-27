@@ -15,8 +15,9 @@ isn't.
 - Geometry comes from Hyprland: resolution, scale, rotation and position are
   whatever the compositor reports, and surfaces appear and disappear as
   monitors are plugged in, unplugged, or reconfigured — no restart.
-- Radius follows Hyprland's `decoration:rounding` by default, so the screen
-  corners match your window corners and change when your theme or config does.
+- Radius is 1.25 times Hyprland's `decoration:rounding` by default, so the
+  screen corners track your window corners (a little larger) and change when
+  your theme or config does.
 
 ## Install
 
@@ -51,7 +52,7 @@ Delete them too if you want nothing left behind.
 
 ## Configuration
 
-Entirely optional. Without a config file the radius tracks
+Entirely optional. Without a config file the radius is 1.25 times Hyprland's
 `decoration:rounding` and the corners are pure black.
 
 Create `~/.config/omarchy/oled-corners.json`:
@@ -69,7 +70,8 @@ Create `~/.config/omarchy/oled-corners.json`:
 
 | Key        | Meaning                                                                 |
 |------------|-------------------------------------------------------------------------|
-| `radius`   | Corner radius in logical pixels. Omit it to follow `decoration:rounding`. |
+| `radius`   | Corner radius in logical pixels, used as written. Omit it to get 1.25 times Hyprland's `decoration:rounding`. |
+| `power`    | Shape of the curve: a number >= 1, default 2 (a circle); higher is squarer. |
 | `color`    | Any Qt color string. Defaults to `#000000`.                              |
 | `monitors` | Per-output radius overrides, keyed by Hyprland output name (`hyprctl monitors`). A `0` turns corners off for that display. |
 
@@ -112,7 +114,7 @@ respected) and are laid on top of your file:
 1. a monitor's own value set in the panel,
 2. "All monitors" set in the panel,
 3. your `oled-corners.json` (its per-monitor value, then its `radius`),
-4. Hyprland's `decoration:rounding`.
+4. 1.25 times Hyprland's `decoration:rounding`.
 
 So **Follow** on a row falls back to your file and Hyprland, and deleting
 `panel.json` puts everything back the way your file says. If `panel.json` is
@@ -141,9 +143,9 @@ stop on their final frame. The panel has no loops of its own.
 
 The notch is optional and nothing depends on it. Under another bar, or with the
 notch removed or its integration switched off in Settings → Integrations, the
-plugin is exactly OLED Corners 1.0.1: the same overlays, the same
-`oled-corners.json`, no extra files, and no panel. `omarchy-shell oled-corners
-settings` answers `no-host` and does nothing. The notch is detected from the
+plugin is only the overlays and `oled-corners.json`: no extra files, and no
+panel. `omarchy-shell oled-corners settings` answers `no-host` and does
+nothing. The notch is detected from the
 small heartbeat file it keeps in `$XDG_RUNTIME_DIR/kalinewb.notch/` (read only);
 the plugin asks the host for its panel and never installs, enables or changes
 anything on the host.
@@ -161,7 +163,7 @@ installed or reloaded.
 ```bash
 ./dev/test.sh                       # lint, radius.js, the panel's zone and keys, the UI gate and its walk
 ./dev/check-ui.sh --score --walk CornersPanel.qml
-./dev/render.sh --all docs/screens  # the panel on a stand-in host, black and white, and standalone
+./dev/render.sh --all /tmp/corners-screens  # the panel on a stand-in host, black and white, and standalone
 ../omarchy-ui/dev/sync-ui.sh --from ../omarchy-ui --to . --tools --only UClose,UButton,UNotice,URow,USection,UStepper,UKeys
 ```
 

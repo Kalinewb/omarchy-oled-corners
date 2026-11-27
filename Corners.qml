@@ -14,7 +14,7 @@ import "radius.js" as Radius
 // position all come from the compositor, and Quickshell.screens adds and
 // drops surfaces as monitors are plugged in, unplugged, or reconfigured.
 //
-// The radius follows Hyprland's `decoration:rounding` unless
+// The radius is 1.25 times Hyprland's `decoration:rounding` unless
 // ~/.config/omarchy/oled-corners.json overrides it. If a surface host is
 // running (the notch), its settings panel can set radii too; those are kept in
 // the plugin's own state folder and sit on top of the file, which is never
